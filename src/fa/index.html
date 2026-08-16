@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fa">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -118,9 +118,12 @@ body:after{content:"";position:fixed;width:480px;height:480px;right:-180px;top:1
     <div class="collapse-head"><div class="section-icon"><i class="fa-solid fa-mobile-screen-button"></i></div><div><div style="font-weight:700">Applications</div><div class="label">Quick install & import</div></div><i id="appArrow" class="fa-solid fa-chevron-down arrow"></i></div>
     <div id="applicationsContent" class="content">
       <div class="app-grid">
-        <div class="app"><h4><i class="fa-brands fa-android"></i> Android</h4><button class="btn" onclick="event.stopPropagation();window.open('https://play.google.com/store/apps/details?id=com.v2ray.ang')">v2rayNG</button><button class="btn secondary" onclick="event.stopPropagation();openV2RayNG()"><i class="fa-solid fa-download"></i> Add Subscription</button></div>
+        <div class="app"><h4><i class="fa-brands fa-android"></i> v2rayNG</h4><button class="btn" onclick="event.stopPropagation();openV2RayNG()"><i class="fa-solid fa-download"></i> Add Subscription</button><button class="btn secondary" onclick="event.stopPropagation();copySubscription()"><i class="fa-solid fa-copy"></i> Copy URL</button></div>
         <div class="app"><h4><i class="fa-brands fa-apple"></i> V2Box</h4><button class="btn" onclick="event.stopPropagation();openV2Box()"><i class="fa-solid fa-bolt"></i> Add Subscription</button><button class="btn secondary" onclick="event.stopPropagation();copySubscription()"><i class="fa-solid fa-copy"></i> Copy URL</button></div>
         <div class="app"><h4><i class="fa-solid fa-fire"></i> Happ Proxy</h4><button class="btn" onclick="event.stopPropagation();openHapp()"><i class="fa-solid fa-download"></i> Add Subscription</button><button class="btn secondary" onclick="event.stopPropagation();copySubscription()"><i class="fa-solid fa-copy"></i> Copy URL</button></div>
+        <div class="app"><h4><i class="fa-solid fa-cube"></i> Hiddify</h4><button class="btn" onclick="event.stopPropagation();openHiddify()"><i class="fa-solid fa-download"></i> Add Subscription</button><button class="btn secondary" onclick="event.stopPropagation();copySubscription()"><i class="fa-solid fa-copy"></i> Copy URL</button></div>
+        <div class="app"><h4><i class="fa-solid fa-cubes"></i> Sing-box</h4><button class="btn" onclick="event.stopPropagation();openSingBox()"><i class="fa-solid fa-download"></i> Add Subscription</button><button class="btn secondary" onclick="event.stopPropagation();copySubscription()"><i class="fa-solid fa-copy"></i> Copy URL</button></div>
+        <div class="app"><h4><i class="fa-solid fa-rocket"></i> Shadowrocket</h4><button class="btn" onclick="event.stopPropagation();openShadowrocket()"><i class="fa-solid fa-download"></i> Add Subscription</button><button class="btn secondary" onclick="event.stopPropagation();copySubscription()"><i class="fa-solid fa-copy"></i> Copy URL</button></div>
         <div class="app outline-app" id="outlineApp"><h4><i class="fa-solid fa-shield-halved"></i> Outline</h4><button class="btn" onclick="event.stopPropagation();openOutline()"><i class="fa-solid fa-plus"></i> Add to Outline</button><button class="btn secondary" onclick="event.stopPropagation();copyOutlineKey()"><i class="fa-solid fa-copy"></i> Copy Key</button></div>
       </div>
     </div>
@@ -150,27 +153,53 @@ const subscriptionUrl = {{ user.subscription_url|tojson }};
 const proxyLinks = {{ user.links|tojson }}.filter(x => x && x !== 'False');
 const outlineKey = proxyLinks.find(x => x.toLowerCase().startsWith('ss://')) || null;
 
-function openAppDeepLink(url, fallbackText='Subscription link copied!'){
-  let opened=false;
-  const onBlur=()=>{opened=true;window.removeEventListener('blur',onBlur)};
-  window.addEventListener('blur',onBlur);
-  window.location.href=url;
-  setTimeout(()=>{window.removeEventListener('blur',onBlur);if(!opened && fallbackText){navigator.clipboard.writeText(subscriptionUrl).then(()=>alert(fallbackText)).catch(()=>alert(fallbackText))}},1200);
+function launchDeepLink(url, fallbackText='Subscription URL copied!'){
+  const a=document.createElement('a');
+  a.href=url;
+  a.style.display='none';
+  a.rel='noreferrer';
+  document.body.appendChild(a);
+  let leftPage=false;
+  const onVisibility=()=>{ if(document.hidden) leftPage=true; };
+  document.addEventListener('visibilitychange',onVisibility,{once:true});
+  try{a.click()}catch(e){window.location.href=url}
+  setTimeout(()=>{
+    document.removeEventListener('visibilitychange',onVisibility);
+    a.remove();
+    if(!leftPage && fallbackText){
+      navigator.clipboard?.writeText(subscriptionUrl).catch(()=>{});
+      alert(fallbackText);
+    }
+  },1500);
 }
 function openV2RayNG(){
-  openAppDeepLink('v2rayng://install-config?url='+encodeURIComponent(subscriptionUrl)+'#{{ user.username }}');
+  const url='v2rayng://install-sub?url='+encodeURIComponent(subscriptionUrl)+'&name='+encodeURIComponent('LOKI NETWORK - {{ user.username }}');
+  launchDeepLink(url,'v2rayNG မဖွင့်နိုင်ပါ။ Subscription URL ကို clipboard ထဲ copy လုပ်ထားပါတယ်။');
 }
 function openV2Box(){
   const url='v2box://install-sub?url='+encodeURIComponent(subscriptionUrl)+'&name='+encodeURIComponent('LOKI NETWORK - {{ user.username }}');
-  openAppDeepLink(url,'V2Box မဖွင့်နိုင်ပါ။ Subscription URL ကို clipboard ထဲ copy လုပ်ထားပါတယ်။');
+  launchDeepLink(url,'V2Box မဖွင့်နိုင်ပါ။ Subscription URL ကို clipboard ထဲ copy လုပ်ထားပါတယ်။');
 }
 function openHapp(){
-  const url='happ://add/'+encodeURIComponent(subscriptionUrl);
-  openAppDeepLink(url,'Happ Proxy မဖွင့်နိုင်ပါ။ Subscription URL ကို clipboard ထဲ copy လုပ်ထားပါတယ်။');
+  // Happ expects the subscription URL directly after /add/; do NOT encode the whole URL.
+  const url='happ://add/'+subscriptionUrl;
+  launchDeepLink(url,'Happ Proxy မဖွင့်နိုင်ပါ။ Subscription URL ကို clipboard ထဲ copy လုပ်ထားပါတယ်။');
+}
+function openHiddify(){
+  const url='hiddify://install-config/?url='+encodeURIComponent(subscriptionUrl);
+  launchDeepLink(url,'Hiddify မဖွင့်နိုင်ပါ။ Subscription URL ကို clipboard ထဲ copy လုပ်ထားပါတယ်။');
+}
+function openSingBox(){
+  const url='sing-box://import-remote-profile?url='+encodeURIComponent(subscriptionUrl)+'#LOKI%20NETWORK';
+  launchDeepLink(url,'sing-box မဖွင့်နိုင်ပါ။ Subscription URL ကို clipboard ထဲ copy လုပ်ထားပါတယ်။');
+}
+function openShadowrocket(){
+  const url='sub://'+subscriptionUrl;
+  launchDeepLink(url,'Shadowrocket မဖွင့်နိုင်ပါ။ Subscription URL ကို clipboard ထဲ copy လုပ်ထားပါတယ်။');
 }
 function openOutline(){
   if(!outlineKey){alert('ဒီ subscription မှာ Shadowsocks (ss://) config မပါပါ။');return}
-  openAppDeepLink(outlineKey,'Outline မဖွင့်နိုင်ပါ။ Shadowsocks Access Key ကို clipboard ထဲ copy လုပ်ထားပါတယ်။');
+  launchDeepLink(outlineKey,'Outline မဖွင့်နိုင်ပါ။ Shadowsocks Access Key ကို clipboard ထဲ copy လုပ်ထားပါတယ်။');
 }
 async function copyOutlineKey(){
   if(!outlineKey){alert('ဒီ subscription မှာ Shadowsocks (ss://) config မပါပါ။');return}
